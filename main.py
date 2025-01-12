@@ -6,7 +6,16 @@ import matplotlib.pyplot as plt
 grid_size = 5
 start = (0, 0)
 goal = (4, 4)
-obs = [(1, 1), (1, 3), (3, 1)]
+num_obs = 3
+obs = []
+for i in range(num_obs):
+    obsx = (random.randint(0, grid_size-1))
+    obsy = (random.randint(0, grid_size-1))
+
+    obs.append((obsx, obsy))
+
+print("Obs: ", obs)
+    
 
 # Q-learning parameters
 learning_rate = 0.1
@@ -16,7 +25,7 @@ exploration_decay = 0.99
 epochs = 1000
 
 # Initialize Q-table
-Q_table = np.zeros((grid_size, grid_size, 4))
+Q_table = np.zeros((grid_size, grid_size, 4)) #create a gsxgsx4 table to store the probabilties of choosing a action based on the state
 
 #map action
 actions = ['up', 'down', 'left', 'right']
@@ -48,6 +57,18 @@ def choose(state):
     else:
         x, y = state
         return actions[np.argmax(Q_table[x, y])]
+    
+def trace_path():
+    path = []
+    state = start
+    while state != goal:
+        path.append(state)
+        x, y = state
+        action = actions[np.argmax(Q_table[x, y])]
+        dx, dy = action_mapping[action]
+        state = (x + dx, y + dy)
+    path.append(goal)
+    return path
 
 # Q-learning process
 for epoch in range(epochs):
@@ -72,19 +93,12 @@ for epoch in range(epochs):
 
         state = new_state
 
+    #path = trace_path()
+    #print("Path :", path)
 
 
-def trace_path():
-    path = []
-    state = start
-    while state != goal:
-        path.append(state)
-        x, y = state
-        action = actions[np.argmax(Q_table[x, y])]
-        dx, dy = action_mapping[action]
-        state = (x + dx, y + dy)
-    path.append(goal)
-    return path
+
+
 
 
 def visualize_grid(path):
@@ -110,6 +124,8 @@ def visualize_grid(path):
 
 # Get and visualize the learned path
 path = trace_path()
-print("\nLearned Path:")
+print("Table:")
+print(Q_table)
+print("Learned Path:")
 print(path)
 visualize_grid(path)
