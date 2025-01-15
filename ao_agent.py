@@ -65,16 +65,17 @@ timed_out = False
 solved = False
 state = start
 steps = 0
+visited_states = [] #keeping track of agent positions
 
 plt.ion()
 while not solved and not timed_out:
     steps += 1
 
-    # Show grid visualization
-    visualize_grid(state)
+
+
 
     input_to_agent = encode_position_binary(*state)
-    response = agent.next_state(input_to_agent).tolist()
+    response = agent.next_state(input_to_agent, DD= False).tolist()
     print("response: ", response)
     response_tuple = tuple(response)
 
@@ -95,10 +96,32 @@ while not solved and not timed_out:
                 label = random.choice(valid_labels)
             else:   # if no available moves case
                 label = [0, 0]
-            
             agent.next_state(input_to_agent, label)  # Send feedback
             print("Pain signal sent: ", label)
             state = start
+
+        elif random.random()< 0.2:    #random exploration
+            print("random")
+            valid_labels = []
+
+            for label, (dx, dy) in action_mapping.items():
+                next_position = (state[0] + dx, state[1] + dy)
+                if is_valid(next_position):
+                    valid_labels.append(label)
+
+            if valid_labels:
+                # Choose a random valid label as feedback
+                label = random.choice(valid_labels)
+            else:   # if no available moves case
+                label = [0, 0]
+
+
+
+
+
+        
+            
+
             
         elif new_state == goal:
             agent.next_state(input_to_agent, Cpos=True)  # Reward for reaching the goal
@@ -106,14 +129,25 @@ while not solved and not timed_out:
             print("Goal reached in", steps, "steps!")
         else:
             state = new_state
+
+                    # Loop detection: Track recent positions and check for loops
+        visited_states.append(state)
+        if len(visited_states) > 5:  # Keep the last 10 states
+            visited_states.pop(0)
+        if visited_states.count(state) > 5:
+            print("Loop detected! Resetting the agent.")
+            state = start
+            label = []
+            while label not in visited_states:
+                r1 = random.randint(0,1)
+                r2 = random.randint(0,1)
+                label = [r1, r2]
+            agent.next_state(input_to_agent, LABEL = label)  # Send negative feedback for the loop
+            print("Loop detected! Resetting the agent.")
     else:
         print("Invalid response from the agent.")
         agent.next_state(input_to_agent, Cneg=True)
 
-    # Stop condition to prevent infinite loops
-    if steps > 100:
-        timed_out = True
-        print("Agent timed out.")
 
 plt.ioff()
 plt.show()
