@@ -3,7 +3,7 @@ from arch__ao_agent import Arch
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-from time import sleep
+
 
 # Grid environment setup
 grid_size = 5
@@ -53,9 +53,10 @@ def visualize_grid(state):
     plt.imshow(grid, cmap="coolwarm", interpolation="nearest")
     plt.xticks(range(grid_size))
     plt.yticks(range(grid_size))
+    plt.pause(0.05)
     plt.title("Agent's Pathfinding")
-    plt.pause(0.5)
     plt.clf()
+
 
 # Initialize agent
 agent = ao.Agent(Arch)
@@ -72,7 +73,7 @@ while not solved and not timed_out:
     steps += 1
 
 
-
+    visualize_grid(state)
 
     input_to_agent = encode_position_binary(*state)
     response = agent.next_state(input_to_agent, DD= False).tolist()
@@ -115,14 +116,6 @@ while not solved and not timed_out:
             else:   # if no available moves case
                 label = [0, 0]
 
-
-
-
-
-        
-            
-
-            
         elif new_state == goal:
             agent.next_state(input_to_agent, Cpos=True)  # Reward for reaching the goal
             solved = True
@@ -132,7 +125,7 @@ while not solved and not timed_out:
 
                     # Loop detection: Track recent positions and check for loops
         visited_states.append(state)
-        if len(visited_states) > 5:  # Keep the last 10 states
+        if len(visited_states) > 6:  # Keep the last 10 states
             visited_states.pop(0)
         if visited_states.count(state) > 5:
             print("Loop detected! Resetting the agent.")
