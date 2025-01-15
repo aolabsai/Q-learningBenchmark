@@ -75,6 +75,7 @@ while not solved and not timed_out:
 
     input_to_agent = encode_position_binary(*state)
     response = agent.next_state(input_to_agent).tolist()
+    print("response: ", response)
     response_tuple = tuple(response)
 
     if response_tuple in action_mapping:
@@ -82,9 +83,22 @@ while not solved and not timed_out:
         new_state = (state[0] + dx, state[1] + dy)
 
         if not is_valid(new_state):
-            agent.next_state(input_to_agent, Cneg=True)  # Pain signal for invalid move
-            print("Pain: Hit an obstacle. Returning to start.")
-            state = start  # Reset to starting position
+            # Find a valid action (label) that the agent should take
+            valid_labels = []
+
+            for label, (dx, dy) in action_mapping.items():
+                next_position = (state[0] + dx, state[1] + dy)
+                if is_valid(next_position):
+                    valid_labels.append(label)
+            if valid_labels:
+                # Choose a random valid label as feedback
+                label = random.choice(valid_labels)
+            else:   # if no available moves case
+                label = [0, 0]
+            
+            agent.next_state(input_to_agent, label)  # Send feedback
+            print("Pain signal sent: ", label)
+            state = start
             
         elif new_state == goal:
             agent.next_state(input_to_agent, Cpos=True)  # Reward for reaching the goal
