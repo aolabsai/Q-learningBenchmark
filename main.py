@@ -16,7 +16,6 @@ for i in range(num_obs):
 
 print("Obs: ", obs)
     
-
 # Q-learning parameters
 learning_rate = 0.1
 discount_factor = 0.9
@@ -25,9 +24,9 @@ exploration_decay = 0.99
 epochs = 1000
 
 # Initialize Q-table
-Q_table = np.zeros((grid_size, grid_size, 4)) #create a gsxgsx4 table to store the probabilties of choosing a action based on the state
+Q_table = np.zeros((grid_size, grid_size, 4))  # Q-table to store action values
 
-#map action
+# Map actions
 actions = ['up', 'down', 'left', 'right']
 action_mapping = {
     'up': (-1, 0),
@@ -36,7 +35,7 @@ action_mapping = {
     'right': (0, 1)
 }
 
-#give reward
+# Function to give reward
 def give_reward(position):
     if position == goal:
         return 10
@@ -45,19 +44,20 @@ def give_reward(position):
     else:
         return -1
 
-#check if the positon chosen is valid
+# Check if a position is valid
 def is_valid(pos):
     x, y = pos
     return 0 <= x < grid_size and 0 <= y < grid_size
 
-#choose the action 
+# Choose an action based on exploration/exploitation
 def choose(state):
     if random.uniform(0, 1) < exploration_rate:
         return random.choice(actions)
     else:
         x, y = state
         return actions[np.argmax(Q_table[x, y])]
-    
+
+# Trace the learned path
 def trace_path():
     path = []
     state = start
@@ -70,10 +70,16 @@ def trace_path():
     path.append(goal)
     return path
 
+#track steps for each episode
+steps_per_episode = []
+
 # Q-learning process
 for epoch in range(epochs):
     state = start
+    steps = 0  # Initialize step counter
+
     while state != goal:
+        steps += 1  # Increment steps
         x, y = state
         action = choose(state)
         dx, dy = action_mapping[action]
@@ -87,28 +93,27 @@ for epoch in range(epochs):
 
         new_x, new_y = new_state
 
+        # Update Q-table
         Q_table[x, y, actions.index(action)] += learning_rate * (
             reward + discount_factor * np.max(Q_table[new_x, new_y]) - Q_table[x, y, actions.index(action)]
         )
 
         state = new_state
 
-    #path = trace_path()
-    #print("Path :", path)
+    steps_per_episode.append(steps)  # Record the steps for this episode
 
+    # Decay exploration rate
+    exploration_rate = max(0.01, exploration_rate * exploration_decay)
 
-
-
-
-
+# Visualize results
 def visualize_grid(path):
     grid = np.zeros((grid_size, grid_size))
 
     # Mark start, goal, and obstacles
-    grid[start] = 0.5   #start
-    grid[goal] = 0.8    #goal
+    grid[start] = 0.5   # Start
+    grid[goal] = 0.8    # Goal
     for obstacle in obs:
-        grid[obstacle] = 1  #obstacle
+        grid[obstacle] = 1  # Obstacle
 
     # Create plot
     fig, ax = plt.subplots()
@@ -118,14 +123,18 @@ def visualize_grid(path):
     for (x, y) in path:
         ax.text(y, x, '●', ha='center', va='center', color='red')
 
-
     plt.title("Path taken by agent")
     plt.show()
 
 # Get and visualize the learned path
 path = trace_path()
-print("Table:")
-print(Q_table)
-print("Learned Path:")
-print(path)
+print("Learned Path:", path)
 visualize_grid(path)
+
+# Analyze step tracking
+print("Steps per episode:", steps_per_episode)
+plt.plot(steps_per_episode)
+plt.xlabel("Episode")
+plt.ylabel("Steps")
+plt.title("Steps Taken per Episode")
+plt.show()

@@ -40,22 +40,26 @@ def is_valid(pos):
     return 0 <= x < grid_size and 0 <= y < grid_size and pos not in obs
 
 # Visualization function
-def visualize_grid(state):
-    grid = np.ones((grid_size, grid_size))  # 1 = free space
+def visualize_grid(path):
+    grid = np.zeros((grid_size, grid_size))
+
+    # Mark start, goal, and obstacles
+    grid[start] = 0.5  # Start
+    grid[goal] = 0.8  # Goal
     for obstacle in obs:
-        grid[obstacle] = 0  # 0 = obstacle
+        grid[obstacle] = 1  # Obstacle
 
-    # Mark start, goal, and agent positions
-    grid[start] = 0.5  # Start (green)
-    grid[goal] = 0.2   # Goal (red)
-    grid[state] = 0.8  # Agent (blue)
+    # Create plot
+    fig, ax = plt.subplots()
+    ax.imshow(grid, cmap='gray', vmin=0, vmax=1)
 
-    plt.imshow(grid, cmap="coolwarm", interpolation="nearest")
-    plt.xticks(range(grid_size))
-    plt.yticks(range(grid_size))
-    plt.pause(0.05)
-    plt.title("Agent's Pathfinding")
-    plt.clf()
+    # Plot the path
+    for (x, y) in path:
+        ax.text(y, x, '●', ha='center', va='center', color='red')
+
+    plt.title("Path taken by agent")
+    plt.show()
+
 
 
 # Initialize agent
@@ -68,16 +72,21 @@ state = start
 steps = 0
 visited_states = [] #keeping track of agent positions
 
+# Solve the grid
+timed_out = False
+solved = False
+state = start
+steps = 0
+path = [start]  # Track the path
+
+
 plt.ion()
 while not solved and not timed_out:
     steps += 1
 
-
-    #visualize_grid(state)
-
     input_to_agent = encode_position_binary(*state)
-    response = agent.next_state(input_to_agent, DD= False).tolist()
-    print("response: ", response)
+    response = agent.next_state(input_to_agent, DD=False).tolist()
+   # print("response: ", response)
     response_tuple = tuple(response)
 
     if response_tuple in action_mapping:
@@ -87,67 +96,61 @@ while not solved and not timed_out:
         if not is_valid(new_state):
             # Find a valid action (label) that the agent should take
             valid_labels = []
-
             for label, (dx, dy) in action_mapping.items():
                 next_position = (state[0] + dx, state[1] + dy)
                 if is_valid(next_position):
                     valid_labels.append(label)
             if valid_labels:
-                # Choose a random valid label as feedback
                 label = random.choice(valid_labels)
-            else:   # if no available moves case
+            else:
                 label = [0, 0]
             agent.next_state(input_to_agent, label)  # Send feedback
-            print("Pain signal sent: ", label)
+            #print("Pain signal sent: ", label)
             state = start
-
-        elif random.random()< 0.2:    #random exploration
-            print("random")
+            path = [start]  # Reset the path
+        elif random.random() < 0.2:  # Random exploration
+            #print("random")
             valid_labels = []
-
             for label, (dx, dy) in action_mapping.items():
                 next_position = (state[0] + dx, state[1] + dy)
                 if is_valid(next_position):
                     valid_labels.append(label)
-
             if valid_labels:
-                # Choose a random valid label as feedback
                 label = random.choice(valid_labels)
-            else:   # if no available moves case
+            else:
                 label = [0, 0]
-
         elif new_state == goal:
             agent.next_state(input_to_agent, Cpos=True)  # Reward for reaching the goal
             solved = True
             print("Goal reached in", steps, "steps!")
+            path.append(goal)
         else:
             state = new_state
+            path.append(state)
 
-                    # Loop detection: Track recent positions and check for loops
+        # Loop detection: Track recent positions and check for loops
         visited_states.append(state)
-        if len(visited_states) > 6:  # Keep the last 10 states
+        if len(visited_states) > 6:
             visited_states.pop(0)
         if visited_states.count(state) > 5:
             print("Loop detected! Resetting the agent.")
             state = start
             valid_labels = []
-
             for label, (dx, dy) in action_mapping.items():
                 next_position = (state[0] + dx, state[1] + dy)
                 if is_valid(next_position):
                     valid_labels.append(label)
-
             if valid_labels:
-                # Choose a random valid label as feedback
                 label = random.choice(valid_labels)
-            else:   # if no available moves case
+            else:
                 label = [0, 0]
-            agent.next_state(input_to_agent, LABEL = label)  # Send negative feedback for the loop
+            agent.next_state(input_to_agent, LABEL=label)  # Send negative feedback
             print("Loop detected! Resetting the agent.")
+            path = [start]  # Reset the path
     else:
         print("Invalid response from the agent.")
         agent.next_state(input_to_agent, Cneg=True)
 
-
+# Visualize the final path
 plt.ioff()
-plt.show()
+visualize_grid(path)
