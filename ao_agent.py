@@ -5,6 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+reset_qa = False
+
+
 # Grid environment setup
 grid_size = 5
 start = (0, 0)
@@ -17,8 +20,6 @@ while len(obs) < num_obs:
     obstacle = (random.randint(0, grid_size - 1), random.randint(0, grid_size - 1))
     if obstacle != start and obstacle != goal:
         obs.add(obstacle)
-
-print("Obstacles:", obs)
 
 # Action mapping
 action_mapping = {
@@ -66,7 +67,7 @@ def visualize_grid(path):
 agent = ao.Agent(Arch)
 
 
-epidodes = 100
+epidodes = 5
 steps_per_episodes = []
 plt.ion()
 for i in range(epidodes):
@@ -79,11 +80,13 @@ for i in range(epidodes):
     steps = 0
     path = [start]  # Track the path
     while not solved and not timed_out:
+        if steps != 0:
+            reset_qa = False
+
         steps += 1
 
         input_to_agent = encode_position_binary(*state)
         response = agent.next_state(input_to_agent, DD=False).tolist()
-    # print("response: ", response)
         response_tuple = tuple(response)
 
         if response_tuple in action_mapping:
@@ -102,11 +105,10 @@ for i in range(epidodes):
                 else:
                     label = [0, 0]
                 agent.next_state(input_to_agent, label)  # Send feedback
-                #print("Pain signal sent: ", label)
                 state = start
                 path = [start]  # Reset the path
             elif random.random() < 0.2:  # Random exploration
-                #print("random")
+
                 valid_labels = []
                 for label, (dx, dy) in action_mapping.items():
                     next_position = (state[0] + dx, state[1] + dy)
@@ -121,6 +123,7 @@ for i in range(epidodes):
                 solved = True
                 print("Goal reached in", steps, "steps!")
                 path.append(goal)
+                reset_qa = True
             else:
                 state = new_state
                 path.append(state)
@@ -150,7 +153,7 @@ for i in range(epidodes):
 
     steps_per_episodes.append(steps)
 # Visualize the final path
-print(steps_per_episodes)
+
 plt.ioff()
 plt.plot(steps_per_episodes)
 visualize_grid(path)
