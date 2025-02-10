@@ -21,7 +21,7 @@ learning_rate = 0.1
 discount_factor = 0.9
 exploration_rate = 0.1
 exploration_decay = 0.99
-epochs = 1000
+epochs = 100
 
 # Initialize Q-table
 Q_table = np.zeros((grid_size, grid_size, 4))  # Q-table to store action values

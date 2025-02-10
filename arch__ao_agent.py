@@ -14,7 +14,7 @@ arch_c = [0]           # adding 1 control neuron which we'll define with the ins
 arch_qa = [number_qa_neurons]
 
 connector_function = "full_conn"
-
+pain_signal = False
 
 
 # To maintain compatibility with our API, do not change the variable name "Arch" or the constructor class "ar.Arch" in the line below
@@ -23,13 +23,20 @@ Arch = ar.Arch(arch_i, arch_z, arch_c, connector_function, arch_qa=arch_qa, qa_c
 
 #Adding Aux Action
 def qa0_firing_rule(INPUT, Agent): 
+    pain_signal = False
     from ao_agent import reset_qa
     if reset_qa:
+        print("reset of qa")
         Agent.counter = number_qa_neurons
     if not hasattr(Agent, 'counter'):
         Agent.__setattr__("counter", 20)
 
-    if Agent.counter < (number_qa_neurons+1):
+    if Agent.counter == 0:
+        pain_signal = True
+        print("pain signal true")
+        group_response = np.ones(number_qa_neurons)
+
+    elif Agent.counter < (number_qa_neurons+1):
         Agent.counter -= 1
         group_response = np.zeros(number_qa_neurons)
         group_response[0 : Agent.counter] = 1

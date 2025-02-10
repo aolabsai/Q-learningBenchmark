@@ -67,7 +67,7 @@ def visualize_grid(path):
 agent = ao.Agent(Arch)
 
 
-epidodes = 5
+epidodes = 10
 steps_per_episodes = []
 plt.ion()
 for i in range(epidodes):
@@ -88,6 +88,7 @@ for i in range(epidodes):
         input_to_agent = encode_position_binary(*state)
         response = agent.next_state(input_to_agent, DD=False).tolist()
         response_tuple = tuple(response)
+        from arch__ao_agent import pain_signal
 
         if response_tuple in action_mapping:
             dx, dy = action_mapping[response_tuple]
@@ -104,7 +105,7 @@ for i in range(epidodes):
                     label = random.choice(valid_labels)
                 else:
                     label = [0, 0]
-                agent.next_state(input_to_agent, label)  # Send feedback
+                _ = agent.next_state(input_to_agent, label)  # Send feedback
                 state = start
                 path = [start]  # Reset the path
             elif random.random() < 0.2:  # Random exploration
@@ -118,6 +119,19 @@ for i in range(epidodes):
                     label = random.choice(valid_labels)
                 else:
                     label = [0, 0]
+            
+            elif pain_signal:
+                print("pain signal due to qa")
+                valid_labels = []
+                for label, (dx, dy) in action_mapping.items():
+                    next_position = (state[0] + dx, state[1] + dy)
+                    if is_valid(next_position):
+                        valid_labels.append(label)
+                if valid_labels:
+                    label = random.choice(valid_labels)
+                else:
+                    label = [0, 0]
+
             elif new_state == goal:
                 agent.next_state(input_to_agent, Cpos=True)  # Reward for reaching the goal
                 solved = True
