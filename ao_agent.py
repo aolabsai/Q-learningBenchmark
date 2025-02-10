@@ -21,7 +21,6 @@ arch_c = [0]           # adding 1 control neuron which we'll define with the ins
 arch_qa = [number_qa_neurons]
 
 connector_function = "full_conn"
-pain_signal = False
 
 
 # To maintain compatibility with our API, do not change the variable name "Arch" or the constructor class "ar.Arch" in the line below
@@ -30,20 +29,19 @@ Arch = ar.Arch(arch_i, arch_z, arch_c, connector_function, arch_qa=arch_qa, qa_c
 
 #Adding Aux Action
 def qa0_firing_rule(INPUT, Agent): 
-    if agent.reset_qa:
+    if Agent.reset_qa:
         print("reset of qa at step: ", steps)
         Agent.counter = number_qa_neurons
-        agent.reset_qa = False
+        Agent.reset_qa = False
     if not hasattr(Agent, 'counter'):
         Agent.__setattr__("counter", 20)
 
 
-    if Agent.counter == 0:
-        pain_signal = True
-        group_response = np.ones(number_qa_neurons)
+    # if Agent.counter == 0:
+    #     group_response = np.ones(number_qa_neurons)
         
 
-    elif Agent.counter < (number_qa_neurons+1):
+    if Agent.counter < (number_qa_neurons+1):
         Agent.counter -= 1
         group_response = np.zeros(number_qa_neurons)
         group_response[0 : Agent.counter] = 1
@@ -149,7 +147,6 @@ for i in range(epidodes):
         input_to_agent = encode_position_binary(*state)
         response = agent.next_state(input_to_agent, DD=False).tolist()
         response_tuple = tuple(response)
-        from arch__ao_agent import pain_signal
 
         if response_tuple in action_mapping:
             dx, dy = action_mapping[response_tuple]
@@ -181,7 +178,7 @@ for i in range(epidodes):
                 else:
                     label = [0, 0]
             
-            elif pain_signal:
+            elif agent.counter == 0:
                 print("pain signal due to qa")
                 valid_labels = []
                 for label, (dx, dy) in action_mapping.items():
@@ -192,6 +189,7 @@ for i in range(epidodes):
                     label = random.choice(valid_labels)
                 else:
                     label = [0, 0]
+                agent.reset_qa = True
 
             elif new_state == goal:
                 agent.next_state(input_to_agent, Cpos=True)  # Reward for reaching the goal
