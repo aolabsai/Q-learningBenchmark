@@ -12,7 +12,7 @@ import ao_arch as ar
 
 
 
-number_qa_neurons = 20
+number_qa_neurons = 5
 
 description = "Basic Clam"
 arch_i = [1, 1, 1, 1, 1, 1]     # 3 neurons, 1 in each of 3 channels, corresponding to Food, Chemical-A, Chemical-B (present=1/not=0)
@@ -128,7 +128,7 @@ def visualize_grid(path):
 agent = ao.Agent(Arch)
 agent.reset_qa = False
 
-epidodes = 10
+epidodes = 50
 steps_per_episodes = []
 plt.ion()
 for i in range(epidodes):
@@ -141,7 +141,6 @@ for i in range(epidodes):
     steps = 0
     path = [start]  # Track the path
     while not solved and not timed_out:
-        print("reset qa: ", agent.reset_qa)
         steps += 1
 
         input_to_agent = encode_position_binary(*state)
@@ -166,6 +165,9 @@ for i in range(epidodes):
                 _ = agent.next_state(input_to_agent, label)  # Send feedback
                 state = start
                 path = [start]  # Reset the path
+            elif steps > 1000:
+                solved = True
+                print("Failed to solve timed out")
             elif random.random() < 0.2:  # Random exploration
 
                 valid_labels = []
