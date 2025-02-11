@@ -12,11 +12,11 @@ import ao_arch as ar
 
 
 
-number_qa_neurons = 5
+number_qa_neurons = 15
 
-description = "Basic Clam"
-arch_i = [1, 1, 1, 1, 1, 1]     # 3 neurons, 1 in each of 3 channels, corresponding to Food, Chemical-A, Chemical-B (present=1/not=0)
-arch_z = [2]           # corresponding to Open=1/Close=0
+description = "Q-learningBenchmark"
+arch_i = [1, 1, 1, 1, 1, 1]     # 6 neurons corresponding to co-ordinates on the grid
+arch_z = [2]           # corresponding to which direction we should move
 arch_c = [0]           # adding 1 control neuron which we'll define with the instinct control function below
 arch_qa = [number_qa_neurons]
 
@@ -128,7 +128,7 @@ def visualize_grid(path):
 agent = ao.Agent(Arch)
 agent.reset_qa = False
 
-epidodes = 50
+epidodes = 100
 steps_per_episodes = []
 plt.ion()
 for i in range(epidodes):
@@ -195,6 +195,7 @@ for i in range(epidodes):
 
             elif new_state == goal:
                 agent.next_state(input_to_agent, Cpos=True)  # Reward for reaching the goal
+                agent.reset_state()
                 solved = True
                 print("Goal reached in", steps, "steps!")
                 path.append(goal)
