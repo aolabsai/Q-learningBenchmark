@@ -232,4 +232,6 @@ for i in range(epidodes):
 
 plt.ioff()
 plt.plot(steps_per_episodes)
+plt.xlabel("Number of trials")
+plt.ylabel("Amount of steps")
 visualize_grid(path)
