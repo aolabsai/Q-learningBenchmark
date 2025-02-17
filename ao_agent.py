@@ -147,12 +147,16 @@ for i in range(epidodes):
         response = agent.next_state(input_to_agent, DD=False).tolist()
         response_tuple = tuple(response)
 
+
+
         if response_tuple in action_mapping:
             dx, dy = action_mapping[response_tuple]
             new_state = (state[0] + dx, state[1] + dy)
 
-            if not is_valid(new_state):
-                # Find a valid action (label) that the agent should take
+                        
+            if new_state in visited_states:
+                print("state already visited")
+                state = start
                 valid_labels = []
                 for label, (dx, dy) in action_mapping.items():
                     next_position = (state[0] + dx, state[1] + dy)
@@ -162,13 +166,32 @@ for i in range(epidodes):
                     label = random.choice(valid_labels)
                 else:
                     label = [0, 0]
+                agent.next_state(input_to_agent, LABEL=label)  # Send negative feedback
+                agent.reset_state()
+                path = [start]
+
+            elif not is_valid(new_state):
+                # Find a valid action (label) that the agent should take
+                valid_labels = []
+                for label, (dx, dy) in action_mapping.items():
+                    next_position = (state[0] + dx, state[1] + dy)
+                    if is_valid(next_position):
+                        valid_labels.append(label)
+
+                if valid_labels:
+                    label = random.choice(valid_labels)
+                else:
+                    label = [0, 0]
                 _ = agent.next_state(input_to_agent, label)  # Send feedback
                 state = start
-                path = [start]  # Reset the path
+                path = [start]  # Reset the path  
+
             elif steps > 1000:
                 solved = True
                 print("Failed to solve timed out")
-            elif random.random() < 0.2:  # Random exploration
+                agent.reset_state()
+
+            elif random.random() < 0.1:  # Random exploration
 
                 valid_labels = []
                 for label, (dx, dy) in action_mapping.items():
@@ -201,6 +224,7 @@ for i in range(epidodes):
                 path.append(goal)
                 agent.reset_qa = True
             else:
+
                 state = new_state
                 path.append(state)
 
@@ -221,11 +245,13 @@ for i in range(epidodes):
                 else:
                     label = [0, 0]
                 agent.next_state(input_to_agent, LABEL=label)  # Send negative feedback
+                agent.reset_state()
                 print("Loop detected! Resetting the agent.")
                 path = [start]  # Reset the path
         else:
             print("Invalid response from the agent.")
             agent.next_state(input_to_agent, Cneg=True)
+            agent.reset_state()
 
     steps_per_episodes.append(steps)
 # Visualize the final path
