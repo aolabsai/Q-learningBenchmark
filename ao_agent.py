@@ -12,7 +12,7 @@ import ao_arch as ar
 
 
 
-number_qa_neurons = 15
+number_qa_neurons = 8
 
 description = "Q-learningBenchmark"
 arch_i = [1, 1, 1, 1, 1, 1]     # 6 neurons corresponding to co-ordinates on the grid
@@ -24,7 +24,7 @@ connector_function = "full_conn"
 
 
 # To maintain compatibility with our API, do not change the variable name "Arch" or the constructor class "ar.Arch" in the line below
-Arch = ar.Arch(arch_i, arch_z, arch_c, connector_function, arch_qa=arch_qa, qa_conn="full", description=description)
+Arch = ar.Arch(arch_i, arch_z, arch_c, connector_function, arch_qa=arch_qa, qa_conn="none", description=description)
 
 
 #Adding Aux Action
@@ -128,8 +128,11 @@ def visualize_grid(path):
 agent = ao.Agent(Arch)
 agent.reset_qa = False
 
-epidodes = 100
+
+
+epidodes = 50
 steps_per_episodes = []
+last_amount_of_steps = 1000
 plt.ion()
 for i in range(epidodes):
     visited_states = [] #keeping track of agent positions
@@ -140,6 +143,11 @@ for i in range(epidodes):
     state = start
     steps = 0
     path = [start]  # Track the path
+    
+
+    last_Inputs = []
+    last_outputs = []
+
     while not solved and not timed_out:
         steps += 1
 
@@ -147,7 +155,8 @@ for i in range(epidodes):
         response = agent.next_state(input_to_agent, DD=False).tolist()
         response_tuple = tuple(response)
 
-
+        last_Inputs.append(input_to_agent)
+        last_outputs.append(response)
 
         if response_tuple in action_mapping:
             dx, dy = action_mapping[response_tuple]
@@ -217,15 +226,24 @@ for i in range(epidodes):
                 agent.reset_qa = True
 
             elif new_state == goal:
+                temp = steps
                 agent.next_state(input_to_agent, Cpos=True)  # Reward for reaching the goal
                 agent.reset_state()
                 solved = True
                 print("Goal reached in", steps, "steps!")
                 path.append(goal)
                 agent.reset_qa = True
+                print("steps: ", steps, "last amount: ", last_amount_of_steps)
+                if steps < last_amount_of_steps:
+                    print("posiitive learning")
+                    for i in range(len(last_outputs)):
+                        agent.next_state(INPUT=last_Inputs[i], LABEL=last_outputs[i])
+                
+                last_amount_of_steps = temp
+                print("ls",last_amount_of_steps)
             else:
-
                 state = new_state
+                
                 path.append(state)
 
             # Loop detection: Track recent positions and check for loops
